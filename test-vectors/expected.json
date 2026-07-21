@@ -1,0 +1,31 @@
+{
+  "invalid/10-tampered-amount.json": {
+    "standalone_verify": "fail",
+    "why": "signature no longer covers the mutated amount"
+  },
+  "invalid/11-valid-sig-wrong-prev.json": {
+    "chain_verify": "fail",
+    "chain_verify_against": "valid/02-paid-call-seq0.json",
+    "receipt_hash": "f5a567baccf2574740e9f2b43f52a4b7b03146153bf8a313cced59697ca9601a",
+    "standalone_verify": "pass",
+    "why": "signature is honest but the chain link does not match receipt 02 \u2014 standalone signature checks are necessary, not sufficient"
+  },
+  "invalid/12-float-amount.json": {
+    "standalone_verify": "fail",
+    "why": "floats are forbidden (spec \u00a74 number rule)"
+  },
+  "valid/01-free-call-seq0.json": {
+    "receipt_hash": "41a1f974fd857b5d65321178a39d3f0248fe4a95c340fb3e91df731a0fe906c6",
+    "standalone_verify": "pass"
+  },
+  "valid/02-paid-call-seq0.json": {
+    "receipt_hash": "a53d52ded80f6996eb0c245a7416704876939da4842540019c46cd4061037418",
+    "standalone_verify": "pass"
+  },
+  "valid/03-paid-call-seq1-chained.json": {
+    "chain_verify": "pass",
+    "chain_verify_against": "valid/02-paid-call-seq0.json",
+    "receipt_hash": "7dd249881e3a2cde3b23cabb9a14f04613cdab9db9f6493668f0c8d74a6b8b0e",
+    "standalone_verify": "pass"
+  }
+}

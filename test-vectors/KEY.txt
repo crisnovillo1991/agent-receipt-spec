@@ -1,0 +1,4 @@
+TEST KEY — public by design, never use outside test vectors
+ed25519 seed (b64): AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=
+ed25519 public (b64): ebVWLo/mVPlAeLES6KmLp5AfhTrmlb7X4OORC60ElmQ=
+key_id: ed25519:ebVWLo/mVPlA
