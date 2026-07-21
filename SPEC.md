@@ -1,6 +1,6 @@
 # Agent Interaction Receipt (AIR) — Specification v0.1 (draft)
 
-Status: **draft** · License: CC-BY-4.0 · Reference implementation: `agentbridge`
+Status: **draft** · License: CC-BY-4.0 · Reference implementation: [agentbridge](https://github.com/crisnovillo1991/agentbridge)
 
 ## 1. Abstract
 
