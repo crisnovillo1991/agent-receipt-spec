@@ -40,7 +40,7 @@ trusting its issuer's code, database, or continued existence.
 | [`test-vectors/`](test-vectors/) | Normative-companion vectors: 3 valid, 3 invalid, with [`expected.json`](test-vectors/expected.json) recording every hash and outcome. Regenerate deterministically with [`tools/generate_vectors.py`](tools/generate_vectors.py). |
 
 Reference gateway implementation (MCP paywall that emits AIR receipts per
-call):[agentbridge](https://github.com/crisnovillo1991/agentbridge).
+call): [agentbridge](https://github.com/crisnovillo1991/agentbridge).
 
 ## What a receipt proves — and what it doesn't
 
