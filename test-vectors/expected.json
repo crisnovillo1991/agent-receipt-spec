@@ -1,31 +1,96 @@
 {
   "invalid/10-tampered-amount.json": {
+    "spec_version": "0.1",
     "standalone_verify": "fail",
     "why": "signature no longer covers the mutated amount"
   },
   "invalid/11-valid-sig-wrong-prev.json": {
     "chain_verify": "fail",
     "chain_verify_against": "valid/02-paid-call-seq0.json",
-    "receipt_hash": "f5a567baccf2574740e9f2b43f52a4b7b03146153bf8a313cced59697ca9601a",
+    "entry_hash": "f5a567baccf2574740e9f2b43f52a4b7b03146153bf8a313cced59697ca9601a",
+    "spec_version": "0.1",
     "standalone_verify": "pass",
-    "why": "signature is honest but the chain link does not match receipt 02 \u2014 standalone signature checks are necessary, not sufficient"
+    "why": "signature honest, chain link wrong \u2014 signature checks are necessary, not sufficient"
   },
   "invalid/12-float-amount.json": {
+    "spec_version": "0.1",
     "standalone_verify": "fail",
-    "why": "floats are forbidden (spec \u00a74 number rule)"
+    "why": "floats are forbidden (\u00a74 number rule)"
+  },
+  "invalid/13-v02-rederivation-mismatch.json": {
+    "disclosure": "disclosures/13-settle-response.json",
+    "entry_hash": "fed83a4c24d30009124280a2d45221a31638ccafb07e0b501acba57536b85124",
+    "rederivation": "fail",
+    "spec_version": "0.2",
+    "standalone_verify": "pass",
+    "why": "embedded tx_hash does not re-derive from the disclosed bytes (\u00a78.4) \u2014 signature honest, disclosure inconsistent"
+  },
+  "invalid/14-v02-attachment-dangling.json": {
+    "pair_verify": "fail",
+    "pair_verify_against": "valid/07-v02-receipt-pending-2814.json",
+    "spec_version": "0.2",
+    "standalone_verify": "pass",
+    "why": "attaches_to does not match the receipt's entry hash (\u00a78.2)"
+  },
+  "invalid/15-v02-missing-settlement-status.json": {
+    "spec_version": "0.2",
+    "standalone_verify": "fail",
+    "why": "payment present without required settlement_status (\u00a74.3)"
   },
   "valid/01-free-call-seq0.json": {
-    "receipt_hash": "41a1f974fd857b5d65321178a39d3f0248fe4a95c340fb3e91df731a0fe906c6",
+    "entry_hash": "41a1f974fd857b5d65321178a39d3f0248fe4a95c340fb3e91df731a0fe906c6",
+    "spec_version": "0.1",
     "standalone_verify": "pass"
   },
   "valid/02-paid-call-seq0.json": {
-    "receipt_hash": "a53d52ded80f6996eb0c245a7416704876939da4842540019c46cd4061037418",
+    "entry_hash": "a53d52ded80f6996eb0c245a7416704876939da4842540019c46cd4061037418",
+    "spec_version": "0.1",
     "standalone_verify": "pass"
   },
   "valid/03-paid-call-seq1-chained.json": {
     "chain_verify": "pass",
     "chain_verify_against": "valid/02-paid-call-seq0.json",
-    "receipt_hash": "7dd249881e3a2cde3b23cabb9a14f04613cdab9db9f6493668f0c8d74a6b8b0e",
+    "entry_hash": "7dd249881e3a2cde3b23cabb9a14f04613cdab9db9f6493668f0c8d74a6b8b0e",
+    "spec_version": "0.1",
     "standalone_verify": "pass"
+  },
+  "valid/04-v02-receipt-settled-sync.json": {
+    "disclosure": "disclosures/04-settle-response.json",
+    "entry_hash": "b1b3b50289e3e203a84191d37c83ac06f5038173e84aeba328619a3945cd28e1",
+    "rederivation": "pass",
+    "spec_version": "0.2",
+    "standalone_verify": "pass"
+  },
+  "valid/05-v02-receipt-pending.json": {
+    "entry_hash": "27adcaca8e747494ff8e39eec199476598f521297ad6f792f5ad7dd1bc97eeb1",
+    "note": "pending + no attachment = dispute-grade for content, NOT payment finality (\u00a78.3)",
+    "spec_version": "0.2",
+    "standalone_verify": "pass"
+  },
+  "valid/06-v02-attachment-settled.json": {
+    "chain_verify": "pass",
+    "chain_verify_against": "valid/05-v02-receipt-pending.json",
+    "disclosure": "disclosures/06-settle-response.json",
+    "entry_hash": "f33d7a156389f631878c2829e38576974759d0b1ad8be48cbc1a6c915e5ac9a7",
+    "pair_verify": "pass",
+    "pair_verify_against": "valid/05-v02-receipt-pending.json",
+    "rederivation": "pass",
+    "spec_version": "0.2",
+    "standalone_verify": "pass"
+  },
+  "valid/07-v02-receipt-pending-2814.json": {
+    "entry_hash": "0f4317b376e65161ed8ae81efaca2fb4a1da13d0a27d9b4a6c439daf5bc3f89a",
+    "spec_version": "0.2",
+    "standalone_verify": "pass"
+  },
+  "valid/08-v02-attachment-failed-2814.json": {
+    "disclosure": "disclosures/08-settle-response.json",
+    "entry_hash": "3868ec22cc00fb142e8a1e37f5c3b235a1db4cadcdabc6334937e03dd40c216b",
+    "pair_verify": "pass",
+    "pair_verify_against": "valid/07-v02-receipt-pending-2814.json",
+    "rederivation": "pass",
+    "spec_version": "0.2",
+    "standalone_verify": "pass",
+    "why": "the false-assurance case (x402#2814): settle claimed processing/success, no tx landed \u2014 derives failed + null; the verbatim digest carries the claim"
   }
 }
