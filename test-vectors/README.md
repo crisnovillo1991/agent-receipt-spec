@@ -25,6 +25,7 @@ re-derivation testing live under `disclosures/`.
 | `valid/06-v02-attachment-settled` | pass | pass vs 05 | pass (disclosure 06) | late settlement as new chain entry |
 | `valid/07-v02-receipt-pending-2814` | pass | — | — | the receipt awaiting the #2814 case |
 | `valid/08-v02-attachment-failed-2814` | pass | pass vs 07 | pass (disclosure 08) | **false assurance**: "processing" derives `failed`; verbatim digest carries the claim |
+| `valid/09-v02-attachment-failed-non-object` | pass | pass vs 08 · pair vs 07 | pass (disclosure 09) | JSON válido no-objeto (`"ok"`) deriva `failed` sin crashear; segunda attachment del mismo recibo (§4.6) |
 | `invalid/13-v02-rederivation-mismatch` | pass | — | **fail** (disclosure 13) | tampered tx_hash caught on disclosure (§8.4) |
 | `invalid/14-v02-attachment-dangling` | pass | **fail** vs 07 | — | attaches_to must match the receipt (§8.2) |
 | `invalid/15-v02-missing-settlement-status` | **fail** | — | — | payment requires settlement_status (§4.3) |

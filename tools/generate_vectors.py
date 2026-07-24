@@ -48,6 +48,8 @@ def derive_x402(raw: bytes) -> tuple[str, str | None]:
     """Normative §8.4 mapping: verbatim settle response -> (final_status, tx_hash)."""
     try:
         obj = json.loads(raw.decode("utf-8"))
+        if not isinstance(obj, dict):
+            return "failed", None
         tx = obj.get("transaction")
         if obj.get("success") is True and isinstance(tx, str) and tx:
             return "settled", tx
@@ -236,6 +238,20 @@ def main() -> None:
         "disclosure": "disclosures/08-settle-response.json", "rederivation": "pass",
         "why": "the false-assurance case (x402#2814): settle claimed processing/success, "
                "no tx landed — derives failed + null; the verbatim digest carries the claim"}
+
+    raw_nonobj = b'"ok"'
+    (DISC / "09-settle-response.json").write_bytes(raw_nonobj)
+    a09 = sign(v02_attachment_core("s-2814", 2, entry_hash(a08), entry_hash(r07),
+                                   raw_nonobj, "2026-07-24T09:00:00.000Z"))
+    write(ROOT / "valid/09-v02-attachment-failed-non-object.json", a09)
+    expected["valid/09-v02-attachment-failed-non-object.json"] = {
+        "spec_version": "0.2", "entry_hash": entry_hash(a09), "standalone_verify": "pass",
+        "chain_verify_against": "valid/08-v02-attachment-failed-2814.json", "chain_verify": "pass",
+        "pair_verify_against": "valid/07-v02-receipt-pending-2814.json", "pair_verify": "pass",
+        "disclosure": "disclosures/09-settle-response.json", "rederivation": "pass",
+        "why": "valid JSON that is NOT an object (bare string) — non-conforming per §8.4, "
+               "derives failed/null instead of crashing; also demonstrates multiple "
+               "attachments per receipt (seq 2 after seq 1)"}
 
     raw_real = b'{"success":true,"transaction":"0xrealhash777","network":"base-sepolia"}'
     (DISC / "13-settle-response.json").write_bytes(raw_real)

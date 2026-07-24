@@ -92,5 +92,17 @@
     "spec_version": "0.2",
     "standalone_verify": "pass",
     "why": "the false-assurance case (x402#2814): settle claimed processing/success, no tx landed \u2014 derives failed + null; the verbatim digest carries the claim"
+  },
+  "valid/09-v02-attachment-failed-non-object.json": {
+    "chain_verify": "pass",
+    "chain_verify_against": "valid/08-v02-attachment-failed-2814.json",
+    "disclosure": "disclosures/09-settle-response.json",
+    "entry_hash": "f8aea46ff0c858b19c01d446eadde65af34669f0af35a4abf87ceeace580c139",
+    "pair_verify": "pass",
+    "pair_verify_against": "valid/07-v02-receipt-pending-2814.json",
+    "rederivation": "pass",
+    "spec_version": "0.2",
+    "standalone_verify": "pass",
+    "why": "valid JSON that is NOT an object (bare string) \u2014 non-conforming per \u00a78.4, derives failed/null instead of crashing; also demonstrates multiple attachments per receipt (seq 2 after seq 1)"
   }
 }
