@@ -1,0 +1,79 @@
+{
+ "capability_id": "weather-lookup",
+ "entry_type": "receipt",
+ "issued_at": "2026-07-24T13:49:43.903Z",
+ "meta": {
+  "authorization": {
+   "conformance_suite": "https://github.com/babyblueviper1/preaction-governance-conformance",
+   "decision_ref": "sha256:58edaf5325483774affa674f294675b796ff30a332acca10f889125564d371ef",
+   "event_id": "279fbf14007edf171d58a1876f036ef6564bd6316a00d1c10d6495c9cdc60ef6",
+   "policy_version": "invinoveritas.review.v5",
+   "scheme": "invinoveritas.verdict_proof.v1",
+   "verdict": "approve_with_concerns",
+   "verifier_pubkey": "6786e18a864893a900bd9858e650f67ccc3513f248fed374b591e2ff6922fbb7"
+  }
+ },
+ "parties": [
+  {
+   "id": "https://bridge.local",
+   "key_id": "ed25519:Jh4/8zAnBPHy",
+   "role": "bridge"
+  },
+  {
+   "id": "0xAGENT_B",
+   "key_id": null,
+   "role": "provider"
+  },
+  {
+   "id": "0xAGENT_A",
+   "key_id": null,
+   "role": "payer"
+  }
+ ],
+ "payment": {
+  "amount": "50",
+  "asset": "SATS-TOY",
+  "network": "base-sepolia",
+  "pay_to": "0xAGENT_B",
+  "payer": "0xAGENT_A",
+  "payment_payload_sha256": "4273d7f083dc25ede485fab0a443c0174c86f3ad7f20a02c1b21d3a39ff625b8",
+  "protocol": "x402",
+  "scheme": "exact",
+  "settle_response_len": 85,
+  "settle_response_sha256": "2e6e44a3fe651c5eb7e19cac678425fd22cc318577d3f10984f4db102f170008",
+  "settlement_ref": "0xmock4273d7f083dc25ed",
+  "settlement_status": "settled"
+ },
+ "prev_entry_hash": null,
+ "request": {
+  "body_len": 204,
+  "body_sha256": "e190a404626eab06a3a4c4141902e075eabed96e63da0001e8749cb0eeabdb1c",
+  "kind": "http-request",
+  "media_type": "application/json",
+  "method": "POST",
+  "status": null,
+  "target": "/mcp/weather-lookup"
+ },
+ "response": {
+  "body_len": 121,
+  "body_sha256": "41a04f476698cc10b8332334a337ad71ccc4a71c979f9b8250f218f7b4df7f03",
+  "kind": "http-response",
+  "media_type": "application/json",
+  "method": null,
+  "status": 200,
+  "target": null
+ },
+ "seq": 0,
+ "session_id": "interop-issue4",
+ "signatures": [
+  {
+   "alg": "ed25519",
+   "key_id": "ed25519:Jh4/8zAnBPHy",
+   "public_key": "Jh4/8zAnBPHyrW1EteAd+kPht6LR7PRlvcWOABg53Y0=",
+   "sig": "Ez9ccaXRuD3A31LzkIS+AcaXNBvyyp9811AjcIenk24Ae3iDFf+QMlrAIxknkWbdo4GeeW+ZbWRWjxYQEwifCQ==",
+   "signer": "bridge"
+  }
+ ],
+ "spec": "agent-interaction-receipt",
+ "spec_version": "0.2"
+}
