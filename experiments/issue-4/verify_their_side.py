@@ -64,7 +64,7 @@ def schnorr_verify(msg32: bytes, pubkey32: bytes, sig64: bytes) -> bool:
 
 # ---------- checks ----------
 def main():
-    ev = json.load(open(sys.argv[1] if len(sys.argv) > 1 else "event.json"))
+    ev = json.load(open(sys.argv[1] if len(sys.argv) > 1 else "event.json", encoding="utf-8"))
     results = {}
 
     # 1) NIP-01 id: sha256 of [0, pubkey, created_at, kind, tags, content]

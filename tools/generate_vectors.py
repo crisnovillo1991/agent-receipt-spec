@@ -24,8 +24,41 @@ PUB_B64 = base64.b64encode(SK.public_key().public_bytes_raw()).decode()
 KEY_ID = "ed25519:" + PUB_B64[:12]
 
 
+INT_BOUND = 2**53 - 1
+
+
+def _check(obj):
+    if isinstance(obj, float):
+        raise ValueError("floats forbidden")
+    if isinstance(obj, bool):
+        return
+    if isinstance(obj, int) and abs(obj) > INT_BOUND:
+        raise ValueError("integer exceeds 2^53-1")
+    if isinstance(obj, dict):
+        for v in obj.values():
+            _check(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            _check(v)
+
+
+def _emit(v) -> str:
+    if isinstance(v, dict):
+        items = sorted(v.items(), key=lambda kv: kv[0].encode("utf-16-be"))
+        return "{" + ",".join(_emit(k) + ":" + _emit(x) for k, x in items) + "}"
+    if isinstance(v, list):
+        return "[" + ",".join(_emit(x) for x in v) + "]"
+    return json.dumps(v, ensure_ascii=False, separators=(",", ":"))
+
+
 def canonical(obj) -> bytes:
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    _check(obj)
+    return _emit(obj).encode("utf-8")
+
+
+def canonical_unchecked(obj) -> bytes:
+    """Solo para fabricar vectores no-conformes a propósito."""
+    return _emit(obj).encode("utf-8")
 
 
 def sha(b: bytes) -> str:
@@ -46,8 +79,15 @@ def sign(core: dict) -> dict:
 
 def derive_x402(raw: bytes) -> tuple[str, str | None]:
     """Normative §8.4 mapping: verbatim settle response -> (final_status, tx_hash)."""
+    def _nodup(pairs):
+        d = {}
+        for k, v in pairs:
+            if k in d:
+                raise ValueError("dup")
+            d[k] = v
+        return d
     try:
-        obj = json.loads(raw.decode("utf-8"))
+        obj = json.loads(raw.decode("utf-8"), object_pairs_hook=_nodup)
         if not isinstance(obj, dict):
             return "failed", None
         tx = obj.get("transaction")
@@ -191,7 +231,7 @@ def main() -> None:
         "why": "signature honest, chain link wrong — signature checks are necessary, not sufficient"}
 
     i12 = json.loads(canonical(v02_)); i12["payment"]["amount"] = 0.001
-    (ROOT / "invalid/12-float-amount.json").write_text(json.dumps(i12, sort_keys=True))
+    (ROOT / "invalid/12-float-amount.json").write_text(json.dumps(i12, sort_keys=True), encoding="utf-8")
     expected["invalid/12-float-amount.json"] = {
         "spec_version": "0.1", "standalone_verify": "fail",
         "why": "floats are forbidden (§4 number rule)"}
@@ -281,9 +321,80 @@ def main() -> None:
         "spec_version": "0.2", "standalone_verify": "fail",
         "why": "payment present without required settlement_status (§4.3)"}
 
-    (ROOT / "expected.json").write_text(json.dumps(expected, indent=2, sort_keys=True))
+    # ---------------------------------------------------- ronda 3 (issues #6-#13)
+    raw_dup = b'{"success":true,"transaction":"0xFIRST","transaction":""}'
+    (DISC / "10-settle-response.json").write_bytes(raw_dup)
+    a10 = sign(v02_attachment_core("s-2814", 3, entry_hash(a09), entry_hash(r07),
+                                   raw_dup, "2026-07-27T09:00:00.000Z"))
+    write(ROOT / "valid/10-v02-attachment-failed-dupkey.json", a10)
+    expected["valid/10-v02-attachment-failed-dupkey.json"] = {
+        "spec_version": "0.2", "entry_hash": entry_hash(a10), "standalone_verify": "pass",
+        "chain_verify_against": "valid/09-v02-attachment-failed-non-object.json",
+        "chain_verify": "pass",
+        "pair_verify_against": "valid/07-v02-receipt-pending-2814.json", "pair_verify": "pass",
+        "disclosure": "disclosures/10-settle-response.json", "rederivation": "pass",
+        "why": "duplicate keys in the verbatim settle response are non-conforming (§8.4): "
+               "last-wins and first-wins parsers must not derive opposite finality from "
+               "identical bytes — derives failed/null; bytes from the hostile-corpus review "
+               "(sha256 5dd9b467...)"}
+
+    raw16 = (ROOT / "valid/05-v02-receipt-pending.json").read_bytes()
+    raw16 = raw16.replace(b'"seq":0', b'"seq":0,"seq":0', 1)
+    (ROOT / "invalid/16-v02-duplicate-key-entry.json").write_bytes(raw16)
+    expected["invalid/16-v02-duplicate-key-entry.json"] = {
+        "spec_version": "0.2", "standalone_verify": "fail",
+        "why": "duplicate key in the entry file itself: same signature, same entry_hash "
+               "under last-wins parsing, a field no check ever sees — verifiers MUST parse "
+               "with duplicate detection (§5)"}
+
+    i17 = v02_receipt_core("s-sync", 0, None, "settled", raw_sync, "0xabc123settledsync")
+    i17["response"] = dict(i17["response"]); i17["response"]["body_len"] = 2**60
+    sig17 = {"signer": "bridge", "alg": "ed25519", "key_id": KEY_ID, "public_key": PUB_B64,
+             "sig": base64.b64encode(SK.sign(canonical_unchecked(i17))).decode()}
+    (ROOT / "invalid/17-v02-integer-overflow.json").write_bytes(
+        canonical_unchecked({**i17, "signatures": [sig17]}))
+    expected["invalid/17-v02-integer-overflow.json"] = {
+        "spec_version": "0.2", "standalone_verify": "fail",
+        "why": "integer beyond 2^53-1: a double-backed JSON stack would re-serialize it "
+               "into a different entry_hash (§5 bound)"}
+
+    i18 = sign(v02_attachment_core("s-2814", 1, entry_hash(r07), entry_hash(r07),
+                                   raw_2814, "2026-07-23T10:09:39.612Z",
+                                   override_status="settled", override_tx=None))
+    write(ROOT / "invalid/18-v02-attachment-settled-null-tx.json", i18)
+    expected["invalid/18-v02-attachment-settled-null-tx.json"] = {
+        "spec_version": "0.2", "standalone_verify": "fail",
+        "why": "attachment final_status settled with tx_hash null — mirror of the "
+               "receipt-leg guard (§8.4 / issue #9)"}
+
+    ident = bytes([1] + [0] * 31)
+    i19 = v02_receipt_core("s-sync", 0, None, "settled", raw_sync, "0xabc123settledsync")
+    ident_b64 = base64.b64encode(ident).decode()
+    i19 = {**i19, "signatures": [{"signer": "bridge", "alg": "ed25519",
+           "key_id": "ed25519:" + ident_b64[:12], "public_key": ident_b64,
+           "sig": base64.b64encode(ident + bytes(32)).decode()}]}
+    write(ROOT / "invalid/19-v02-small-order-key.json", i19)
+    expected["invalid/19-v02-small-order-key.json"] = {
+        "spec_version": "0.2", "standalone_verify": "fail",
+        "why": "identity-point public key with zero scalar: the signature equation "
+               "degenerates and mainstream libraries ACCEPT it — an entry signed with no "
+               "secret. Verifiers MUST reject small-order keys before signature math "
+               "(§6 / issue #12, corpus H5)"}
+
+    i20core = v02_receipt_core("s-late", 1, entry_hash(r05), "pending", None, None)
+    i20core["prev_receipt_hash"] = i20core.pop("prev_entry_hash")
+    i20 = sign(i20core)
+    write(ROOT / "invalid/20-v02-wrong-version-field.json", i20)
+    expected["invalid/20-v02-wrong-version-field.json"] = {
+        "spec_version": "0.2", "standalone_verify": "fail",
+        "why": "a 0.2 entry carrying the v0.1 field name prev_receipt_hash: version "
+               "dispatch must reject the other version's names, not merely not look for "
+               "them (§4.0 / issue #10, corpus H22)"}
+
+    (ROOT / "expected.json").write_text(json.dumps(expected, indent=2, sort_keys=True),
+                                        encoding="utf-8")
     (ROOT / "KEY.txt").write_text(
-        "TEST KEY — public by design, never use outside test vectors\n"
+        "TEST KEY -- public by design, never use outside test vectors\n"
         f"ed25519 seed (b64): {base64.b64encode(SEED).decode()}\n"
         f"ed25519 public (b64): {PUB_B64}\n"
         f"key_id: {KEY_ID}\n")

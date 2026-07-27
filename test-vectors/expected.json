@@ -37,6 +37,31 @@
     "standalone_verify": "fail",
     "why": "payment present without required settlement_status (\u00a74.3)"
   },
+  "invalid/16-v02-duplicate-key-entry.json": {
+    "spec_version": "0.2",
+    "standalone_verify": "fail",
+    "why": "duplicate key in the entry file itself: same signature, same entry_hash under last-wins parsing, a field no check ever sees \u2014 verifiers MUST parse with duplicate detection (\u00a75)"
+  },
+  "invalid/17-v02-integer-overflow.json": {
+    "spec_version": "0.2",
+    "standalone_verify": "fail",
+    "why": "integer beyond 2^53-1: a double-backed JSON stack would re-serialize it into a different entry_hash (\u00a75 bound)"
+  },
+  "invalid/18-v02-attachment-settled-null-tx.json": {
+    "spec_version": "0.2",
+    "standalone_verify": "fail",
+    "why": "attachment final_status settled with tx_hash null \u2014 mirror of the receipt-leg guard (\u00a78.4 / issue #9)"
+  },
+  "invalid/19-v02-small-order-key.json": {
+    "spec_version": "0.2",
+    "standalone_verify": "fail",
+    "why": "identity-point public key with zero scalar: the signature equation degenerates and mainstream libraries ACCEPT it \u2014 an entry signed with no secret. Verifiers MUST reject small-order keys before signature math (\u00a76 / issue #12, corpus H5)"
+  },
+  "invalid/20-v02-wrong-version-field.json": {
+    "spec_version": "0.2",
+    "standalone_verify": "fail",
+    "why": "a 0.2 entry carrying the v0.1 field name prev_receipt_hash: version dispatch must reject the other version's names, not merely not look for them (\u00a74.0 / issue #10, corpus H22)"
+  },
   "valid/01-free-call-seq0.json": {
     "entry_hash": "41a1f974fd857b5d65321178a39d3f0248fe4a95c340fb3e91df731a0fe906c6",
     "spec_version": "0.1",
@@ -104,5 +129,17 @@
     "spec_version": "0.2",
     "standalone_verify": "pass",
     "why": "valid JSON that is NOT an object (bare string) \u2014 non-conforming per \u00a78.4, derives failed/null instead of crashing; also demonstrates multiple attachments per receipt (seq 2 after seq 1)"
+  },
+  "valid/10-v02-attachment-failed-dupkey.json": {
+    "chain_verify": "pass",
+    "chain_verify_against": "valid/09-v02-attachment-failed-non-object.json",
+    "disclosure": "disclosures/10-settle-response.json",
+    "entry_hash": "a35ebaf5cbe76519b832e4103d5c906b7a0c0f7458f3411e0f20b9a68b2528cd",
+    "pair_verify": "pass",
+    "pair_verify_against": "valid/07-v02-receipt-pending-2814.json",
+    "rederivation": "pass",
+    "spec_version": "0.2",
+    "standalone_verify": "pass",
+    "why": "duplicate keys in the verbatim settle response are non-conforming (\u00a78.4): last-wins and first-wins parsers must not derive opposite finality from identical bytes \u2014 derives failed/null; bytes from the hostile-corpus review (sha256 5dd9b467...)"
   }
 }

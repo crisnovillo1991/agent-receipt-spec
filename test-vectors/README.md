@@ -29,3 +29,19 @@ re-derivation testing live under `disclosures/`.
 | `invalid/13-v02-rederivation-mismatch` | pass | — | **fail** (disclosure 13) | tampered tx_hash caught on disclosure (§8.4) |
 | `invalid/14-v02-attachment-dangling` | pass | **fail** vs 07 | — | attaches_to must match the receipt (§8.2) |
 | `invalid/15-v02-missing-settlement-status` | **fail** | — | — | payment requires settlement_status (§4.3) |
+
+## Round 3 (second-implementation review — issues #6–#13)
+
+| Vector | standalone | extra | teaches |
+|---|---|---|---|
+| `valid/10-v02-attachment-failed-dupkey` | pass | chain vs 09 · pair vs 07 · re-derivation (disclosure 10) | duplicate keys in a settle response are non-conforming: derives `failed/null`, never two verdicts from one artifact (§8.4) |
+| `invalid/16-v02-duplicate-key-entry` | **fail** | — | a duplicated key in the entry file is a field no check ever sees (§5) |
+| `invalid/17-v02-integer-overflow` | **fail** | — | integers beyond 2^53−1 break cross-stack hash stability (§5) |
+| `invalid/18-v02-attachment-settled-null-tx` | **fail** | — | settled without a tx_hash — the attachment-leg mirror guard (§8.4) |
+| `invalid/19-v02-small-order-key` | **fail** | — | identity-point key + zero scalar: mainstream libraries ACCEPT the signature; §6 rejects the key first |
+| `invalid/20-v02-wrong-version-field` | **fail** | — | version dispatch must reject the other version's field names (§4.0) |
+
+`hostile-corpus/` holds the 31 constructed entries (plus verbatim `.raw`
+settle responses, `SHA256SUMS` intact) from the independent
+second-implementation review — the permanent regression suite behind this
+round.
