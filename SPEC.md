@@ -305,6 +305,14 @@ only check that touches a ledger, and it is optional for format validity.
   an on-chain identity registry (ERC-8004-style), or pin contractually. Key
   rotation SHOULD start a new session.
 - **Timestamps** are issuer claims until anchored (§7).
+- **Prose is not a transport.** Copies of signed artifacts pasted into
+  comments, chats or docs are non-authoritative: rendering surfaces
+  silently normalize whitespace and truncate fields, producing false
+  "signature invalid" alarms indistinguishable from real signing bugs.
+  Bindings to external artifacts (e.g. `meta.authorization`) SHOULD carry
+  the exact content hash and a checksum-stable retrieval pointer (raw URL,
+  relay event, content-addressed store); inline copies are illustrative
+  only. Learned empirically: see `experiments/issue-4/REPORT.md`.
 - **Non-repudiation, not recomputability.** Content-free digests prove what
   was recorded and that it is unaltered; a verifier without the underlying
   bytes cannot re-derive the request or response from the receipt. A
@@ -407,7 +415,9 @@ dispatch.
   facilitator responses (same thread). Evidence formats should be hardened
   by real failures, not happy-path examples.
 
-**Planned for v0.3:** provider/payer co-signatures; algorithm agility
+**Planned for v0.3:** first-class `authorization` field with transport
+discipline (`authorization_uri`, `authorization_sha256`, `transport_hint`;
+see issue #14); provider/payer co-signatures; algorithm agility
 (secp256k1, ERC-1271 contract signatures); Merkle anchoring profile;
 RFC 3161 timestamp attachment; salted-digest mode as default; x402 v2 wire
 profile (`PAYMENT-REQUIRED` / `PAYMENT-SIGNATURE` headers, CAIP identifiers).

@@ -1,14 +1,23 @@
-# Interop experiment — issue #4
+# Interop experiment — issue #4 (COMPLETED)
 
 Pre-action verdict (invinoveritas, NIP-01 signed event) bound into an AIR
-receipt under `meta.authorization`. Artifacts:
+receipt under `meta.authorization`. Both directions verified by both
+parties, two independent codebases each. Full report: `REPORT.md`.
 
-- `event.json` — their signed verdict event, as posted on issue #4.
-- `verify_their_side.py` — zero-dep independent verification: BIP340 schnorr
-  (pure Python), NIP-01 id recompute, decision_ref recompute per their
-  declared preimage rule. Run: `python3 verify_their_side.py event.json`
-- `air-receipt.json` — the AIR v0.2 receipt for the toy interaction with the
-  verdict bound. Verify: `python3 ../../verifier/verify.py air-receipt.json`
+- `event.json` — the verdict event, **byte-identical to the relay-native
+  file** committed by the issuer (sha256
+  `8e6030b4e9f7e6a9cdb4e3f7896f6a37cdf8eed39af4a93e54cec3213f544654`).
+  Canonical sources: `wss://nos.lol` / `wss://relay.primal.net` (id
+  `279fbf14…`) or the raw URL in their conformance repo.
+- `verify_their_side.py` — zero-dep independent verification: BIP340
+  schnorr (pure Python), NIP-01 id recompute, decision_ref recompute.
+  Result against relay-native bytes: **4/4 PASS**.
+- `air-receipt.json` — the AIR v0.2 receipt binding the verdict
+  (entry_hash `c697ec06…`). Verify: `python3 ../../verifier/verify.py
+  air-receipt.json`.
 
-Finding log: NIP-01 id not byte-reproducible from comment-transported JSON
-(sig + decision_ref verify); awaiting raw event bytes to close 4/4.
+Finding log (all resolved): three consecutive transport failures taught the
+same lesson — (1) truncated transcription (fields dropped), (2) a second
+truncated paste, (3) markdown whitespace collapse (`  ·  ` → ` · ` at char
+1784: invisible to eyes, fatal to hashes). **Prose is not a transport for
+signed artifacts.** See SPEC §9 and issue #6.
