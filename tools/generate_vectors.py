@@ -28,6 +28,9 @@ INT_BOUND = 2**53 - 1
 
 
 def _check(obj):
+    if isinstance(obj, str):
+        obj.encode("utf-8")
+        return
     if isinstance(obj, float):
         raise ValueError("floats forbidden")
     if isinstance(obj, bool):
@@ -390,6 +393,43 @@ def main() -> None:
         "why": "a 0.2 entry carrying the v0.1 field name prev_receipt_hash: version "
                "dispatch must reject the other version's names, not merely not look for "
                "them (§4.0 / issue #10, corpus H22)"}
+
+    # ---------------------------------------------------- ronda 3.1 (issue #15 + notas)
+    v11_core = v02_receipt_core("s-astral", 0, None, "pending", None, None)
+    v11_core["meta"] = {"\U0001F600": "astral", "\uFFFD": "bmp"}
+    v11 = sign(v11_core)
+    write(ROOT / "valid/11-v02-astral-meta-keys.json", v11)
+    expected["valid/11-v02-astral-meta-keys.json"] = {
+        "spec_version": "0.2", "entry_hash": entry_hash(v11), "standalone_verify": "pass",
+        "why": "meta keys U+1F600 (astral) and U+FFFD (BMP): RFC 8785 UTF-16 code-unit "
+               "ordering places the astral key FIRST — the only round-3 change with "
+               "hash-stability reach beyond the BMP, now pinned (§5)"}
+
+    raw21 = b'{"isValid": true}'
+    (DISC / "21-settle-response.json").write_bytes(raw21)
+    i21 = sign(v02_attachment_core("s-2814", 1, entry_hash(r07), entry_hash(r07),
+                                   raw21, "2026-07-23T10:09:39.612Z",
+                                   override_status="settled", override_tx="0xlaundered"))
+    write(ROOT / "invalid/21-v02-verify-leg-as-settlement.json", i21)
+    expected["invalid/21-v02-verify-leg-as-settlement.json"] = {
+        "spec_version": "0.2", "standalone_verify": "pass",
+        "disclosure": "disclosures/21-settle-response.json", "rederivation": "fail",
+        "why": "an attachment claiming settled against a verify-shaped disclosure "
+               "({\"isValid\": true}): verify-leg and settle-leg are different evidence "
+               "classes and the mapping derives failed/null (§8.4) — the rule with the "
+               "most direct operational consequence, now pinned"}
+
+    import copy as _copy
+    i22 = _copy.deepcopy(a06)
+    i22["signatures"][0]["note"] = "\ud800"
+    (ROOT / "invalid/22-v02-lone-surrogate-signature.json").write_text(
+        json.dumps(i22, separators=(",", ":")), encoding="utf-8", errors="surrogatepass")
+    expected["invalid/22-v02-lone-surrogate-signature.json"] = {
+        "spec_version": "0.2", "standalone_verify": "fail",
+        "why": "a lone surrogate outside the signed payload: json.loads accepts it, "
+               "UTF-8 refuses it, so no entry_hash exists — two conforming stacks would "
+               "otherwise produce a content address and none, both saying OK "
+               "(§5 / issue #15)"}
 
     (ROOT / "expected.json").write_text(json.dumps(expected, indent=2, sort_keys=True),
                                         encoding="utf-8")

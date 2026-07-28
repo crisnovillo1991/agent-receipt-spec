@@ -1,3 +1,9 @@
+> **Historical record.** This table describes results against `75499dc`
+> (pre-round-3). Against the round-3 release all 31 entries measure
+> **0 CRASH · 0 DIVERGE · 0 HOLE** — see the round-3 report in
+> x402-foundation/x402#2922. Preserved verbatim as the regression
+> baseline; `SHA256SUMS` covers the entries, not this file.
+
 # AIR hostile corpus — 31 constructed entries (third pass, x402-foundation/x402#2922)
 
 Constructed against `crisnovillo1991/agent-receipt-spec` @ `75499dc6ed53bf724d7233f9c8563c2f99447008`, signed with the published test key (seed `0x01..0x20`) by an independent pure-Python Ed25519 signer (RFC 8032), byte-identical signatures to OpenSSL. Run through two implementations: the repo's `verifier/verify.py` and a second implementation with no shared dependencies (own JSON parser, own §5 canonical serializer, own Ed25519, own base64; only sha256/sha512 shared).
