@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIR Evidence Console — live demo</title>
+<meta name="description" content="Interactive demo of the AIR Evidence Profile: typed mandates, cross-signed receipts, tamper-evident custody, deterministic claims adjudication. All cryptography runs locally in your browser.">
+<style>
+/* Producto: consola forense de evidencia criptográfica (AIR Evidence Profile)
+   Edición browser para GitHub Pages — misma identidad que la consola de referencia.
+   Tono: expediente pericial — técnico, denso, sobrio, confiable
+   VARIANZA: 4 · MOVIMIENTO: 3 · DENSIDAD: 7
+   Paleta: carbón azulado frío + latón viejo; jade/ladrillo desaturados solo
+   para semántica de veredicto. Mono protagonista. Cero dependencias externas. */
+
+:root {
+  --bg: #101318;
+  --surface: #171b22;
+  --surface-2: #1d222b;
+  --line: rgba(233, 236, 241, 0.08);
+  --line-strong: rgba(233, 236, 241, 0.16);
+  --text: #e6e8ec;
+  --muted: #8b919c;
+  --faint: #5c626c;
+  --brass: #b9975b;
+  --brass-dim: rgba(185, 151, 91, 0.14);
+  --jade: #5e9c76;
+  --jade-dim: rgba(94, 156, 118, 0.12);
+  --brick: #c4655a;
+  --brick-dim: rgba(196, 101, 90, 0.12);
+  --mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", Menlo, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r: 6px;
+  --sp: 4px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { color-scheme: dark; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 14px; line-height: 1.55;
+  min-height: 100vh;
+}
+
+header {
+  display: flex; align-items: baseline; flex-wrap: wrap;
+  gap: calc(var(--sp) * 4);
+  padding: calc(var(--sp) * 4) calc(var(--sp) * 6);
+  border-bottom: 1px solid var(--line);
+}
+.wordmark { font-family: var(--mono); font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+.wordmark .tld { color: var(--brass); }
+.profile-tag {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 10px;
+}
+.local-tag { font-family: var(--mono); font-size: 11px; color: var(--jade); }
+.header-stats {
+  margin-left: auto; display: flex; gap: calc(var(--sp) * 6);
+  font-family: var(--mono); font-size: 12px; color: var(--muted);
+}
+.header-stats b { color: var(--text); font-weight: 600; }
+
+main {
+  display: grid; grid-template-columns: repeat(12, 1fr);
+  gap: calc(var(--sp) * 5);
+  padding: calc(var(--sp) * 6);
+  max-width: 1240px; margin: 0 auto;
+}
+.col-chain { grid-column: span 7; display: flex; flex-direction: column; gap: calc(var(--sp) * 5); }
+.col-side  { grid-column: span 5; display: flex; flex-direction: column; gap: calc(var(--sp) * 5); }
+@media (max-width: 900px) { .col-chain, .col-side { grid-column: span 12; } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.panel-head {
+  display: flex; align-items: baseline; gap: calc(var(--sp) * 3);
+  padding: calc(var(--sp) * 3) calc(var(--sp) * 4);
+  border-bottom: 1px solid var(--line);
+}
+.eyebrow {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass);
+}
+.panel-head .sub { font-size: 12px; color: var(--muted); }
+.panel-body { padding: calc(var(--sp) * 4); }
+
+.mandate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--sp) * 2) calc(var(--sp) * 6); font-size: 13px; }
+.mandate-grid dt { color: var(--faint); font-family: var(--mono); font-size: 11px; }
+.mandate-grid dd { font-family: var(--mono); font-size: 12.5px; margin-bottom: calc(var(--sp) * 2); }
+
+.budget { margin-top: calc(var(--sp) * 3); }
+.budget-track { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; border: 1px solid var(--line); }
+.budget-fill { height: 100%; background: var(--brass); width: 0%; transition: width 300ms ease, background 300ms ease; }
+.budget-fill.over { background: var(--brick); }
+.budget-label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: calc(var(--sp) * 1); }
+
+.chain { display: flex; flex-direction: column; }
+.chain-empty { padding: calc(var(--sp) * 8) calc(var(--sp) * 4); text-align: center; color: var(--muted); font-size: 13px; }
+.link-wrap { display: flex; flex-direction: column; align-items: stretch; }
+.link-joint {
+  align-self: flex-start; margin-left: 26px;
+  display: flex; align-items: center; gap: 8px; height: 26px;
+  font-family: var(--mono); font-size: 10.5px; color: var(--faint);
+}
+.link-joint::before { content: ""; width: 1px; height: 100%; background: var(--line-strong); }
+.link-joint.broken { color: var(--brick); }
+.link-joint.broken::before { background: var(--brick); }
+
+.receipt {
+  display: grid; grid-template-columns: 52px 1fr auto;
+  gap: calc(var(--sp) * 3); align-items: center;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--r); padding: calc(var(--sp) * 3) calc(var(--sp) * 4);
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+.receipt:hover { border-color: var(--line-strong); }
+.receipt.tampered { border-color: var(--brick); background: var(--brick-dim); transform: translateX(6px); }
+.receipt .seq {
+  font-family: var(--mono); font-size: 11px; color: var(--faint);
+  border: 1px solid var(--line-strong); border-radius: var(--r);
+  text-align: center; padding: 6px 0;
+}
+.receipt .info { min-width: 0; }
+.receipt .amount { font-family: var(--mono); font-size: 14px; font-weight: 600; }
+.receipt.tampered .amount { color: var(--brick); text-decoration: line-through; }
+.receipt .hash { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badges { display: flex; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+.badge {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; border-radius: 3px; padding: 1px 6px;
+  border: 1px solid var(--line-strong); color: var(--muted);
+}
+.badge.anchored { color: var(--jade); border-color: rgba(94,156,118,.4); background: var(--jade-dim); }
+.badge.pending  { color: var(--brass); border-color: rgba(185,151,91,.4); background: var(--brass-dim); }
+.badge.tampered { color: var(--brick); border-color: rgba(196,101,90,.5); background: var(--brick-dim); }
+.badge.approval { color: var(--text); }
+
+.claim-btn {
+  font-family: var(--mono); font-size: 11px;
+  background: transparent; color: var(--brass);
+  border: 1px solid rgba(185,151,91,.45); border-radius: var(--r);
+  padding: 6px 12px; cursor: pointer;
+  transition: background 160ms ease;
+}
+.claim-btn:hover { background: var(--brass-dim); }
+.claim-btn:focus-visible, .action:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.claim-btn:active { transform: translateY(1px); }
+
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--sp) * 2); }
+.action {
+  font-family: var(--sans); font-size: 12.5px; font-weight: 500; text-align: left;
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line-strong); border-radius: var(--r);
+  padding: calc(var(--sp) * 2.5) calc(var(--sp) * 3);
+  cursor: pointer; transition: border-color 160ms ease;
+}
+.action small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+.action:hover { border-color: var(--brass); }
+.action:active { transform: translateY(1px); }
+.action.danger:hover { border-color: var(--brick); }
+.action.wide { grid-column: span 2; }
+.action:disabled { opacity: 0.45; cursor: wait; }
+
+.verdict-empty { color: var(--muted); font-size: 13px; padding: calc(var(--sp) * 2) 0; }
+.checks { display: flex; flex-direction: column; gap: 2px; margin-bottom: calc(var(--sp) * 4); }
+.check {
+  display: grid; grid-template-columns: 44px 1fr; gap: calc(var(--sp) * 3);
+  font-family: var(--mono); font-size: 11.5px;
+  padding: 5px 8px; border-radius: 4px; background: var(--surface-2);
+}
+.check .k { color: var(--faint); }
+.check.pass .v { color: var(--jade); }
+.check.fail .v { color: var(--brick); }
+
+.stamp {
+  font-family: var(--mono); font-size: 17px; font-weight: 700;
+  letter-spacing: 0.12em; text-align: center;
+  padding: calc(var(--sp) * 3); border: 2px solid; border-radius: var(--r);
+  margin-bottom: calc(var(--sp) * 3);
+  animation: stamp-in 260ms ease;
+}
+@keyframes stamp-in { from { transform: scale(1.06); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+.stamp.ok   { color: var(--jade);  border-color: rgba(94,156,118,.55);  background: var(--jade-dim); }
+.stamp.bad  { color: var(--brick); border-color: rgba(196,101,90,.55);  background: var(--brick-dim); }
+.stamp.warn { color: var(--brass); border-color: rgba(185,151,91,.55);  background: var(--brass-dim); }
+.resolution { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; margin-bottom: calc(var(--sp) * 3); }
+
+.violations { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+.violations th {
+  text-align: left; color: var(--faint); font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase; font-size: 9.5px;
+  padding: 4px 8px; border-bottom: 1px solid var(--line);
+}
+.violations td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.violations td.actual { color: var(--brick); }
+.violations td.expected { color: var(--muted); }
+
+.eventlog {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  display: flex; flex-direction: column-reverse;
+  gap: 3px; max-height: 180px; overflow-y: auto;
+}
+.eventlog .t { color: var(--faint); margin-right: 8px; }
+.eventlog .err { color: var(--brick); }
+
+.unsupported {
+  margin: calc(var(--sp) * 6); padding: calc(var(--sp) * 5);
+  border: 1px solid var(--brick); border-radius: var(--r);
+  background: var(--brick-dim); color: var(--text); font-size: 13.5px;
+  display: none;
+}
+
+footer {
+  padding: calc(var(--sp) * 4) calc(var(--sp) * 6);
+  color: var(--faint); font-size: 11.5px;
+  border-top: 1px solid var(--line);
+  max-width: 1240px; margin: 0 auto;
+}
+footer a { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="wordmark">air<span class="tld">-evidence</span> console</span>
+  <span class="profile-tag">air-evidence/0.1</span>
+  <span class="local-tag">● all crypto runs locally in your browser (WebCrypto Ed25519)</span>
+  <div class="header-stats">
+    <span>receipts <b id="st-receipts">0</b></span>
+    <span>anchored <b id="st-anchored">0</b></span>
+    <span>anchors <b id="st-anchors">0</b></span>
+  </div>
+</header>
+
+<div class="unsupported" id="unsupported">
+  This browser does not support Ed25519 in WebCrypto. Please open the console in a
+  current version of Chrome, Edge, Firefox or Safari.
+</div>
+
+<main>
+  <div class="col-chain">
+    <section class="panel" aria-labelledby="mandate-title">
+      <div class="panel-head">
+        <span class="eyebrow" id="mandate-title">Mandate — typed constraints</span>
+        <span class="sub" id="mandate-id"></span>
+      </div>
+      <div class="panel-body">
+        <dl class="mandate-grid" id="mandate-grid"></dl>
+        <div class="budget">
+          <div class="budget-track"><div class="budget-fill" id="budget-fill"></div></div>
+          <div class="budget-label"><span>cumulative spend</span><span id="budget-text">—</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="chain-title">
+      <div class="panel-head">
+        <span class="eyebrow" id="chain-title">Receipt chain</span>
+        <span class="sub">each link carries prev_receipt_hash — mutate one and watch it break</span>
+      </div>
+      <div class="panel-body">
+        <div class="chain" id="chain">
+          <div class="chain-empty">No receipts yet — issue one to start the chain.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-side">
+    <section class="panel" aria-labelledby="actions-title">
+      <div class="panel-head"><span class="eyebrow" id="actions-title">Actions</span></div>
+      <div class="panel-body actions" id="actions">
+        <button class="action" data-act="issue-ok">Issue in-mandate receipt<small>random ARS 50k–140k</small></button>
+        <button class="action" data-act="issue-approved">Issue with human approval<small>ARS 180,000 · signed by principal</small></button>
+        <button class="action" data-act="issue-unapproved">Issue above threshold, unapproved<small>ARS 180,000 · missing approval</small></button>
+        <button class="action" data-act="issue-incident">Issue the §13 incident<small>ARS 780,000 · breaches everything</small></button>
+        <button class="action" data-act="anchor">Anchor log<small>Merkle root + signed timestamp</small></button>
+        <button class="action danger" data-act="tamper">Tamper last receipt<small>mutate stored amount post-hoc</small></button>
+        <button class="action wide" data-act="reset">Reset world<small>fresh identities, empty log</small></button>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="verdict-title">
+      <div class="panel-head">
+        <span class="eyebrow" id="verdict-title">Adjudication</span>
+        <span class="sub">deterministic D1–D6</span>
+      </div>
+      <div class="panel-body" id="verdict-body">
+        <div class="verdict-empty">File a claim on any receipt to run the adjudicator.</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="log-title">
+      <div class="panel-head"><span class="eyebrow" id="log-title">Event log</span></div>
+      <div class="panel-body"><div class="eventlog" id="eventlog"></div></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Reference console for the <strong>AIR Evidence Profile</strong>. All parties are fictitious
+  <span style="font-family:var(--mono)">.example</span> entities; keys are ephemeral, generated in this page,
+  and never leave your browser. Spec &amp; reference implementation: see the repository.
+</footer>
+
+<script type="module">
+import {
+  makeKeyPair, signObject, DIDRegistry, issueMandate, buildReceipt,
+  humanApproval, termsHash, ReceiptLog, fileClaim, adjudicate,
+  hashObject, hashText, nowIso,
+} from "./core.js";
+
+const $ = (id) => document.getElementById(id);
+const fmtARS = (m) => "ARS " + (m / 100).toLocaleString("en-US", { minimumFractionDigits: 2 });
+const shortHash = (h) => (h ? h.slice(0, 18) + "…" + h.slice(-6) : "genesis");
+
+function logEvent(msg, isErr = false) {
+  const line = document.createElement("div");
+  line.innerHTML = `<span class="t">${new Date().toLocaleTimeString("en-GB")}</span><span class="${isErr ? "err" : ""}"></span>`;
+  line.lastChild.textContent = msg;
+  $("eventlog").appendChild(line);
+}
+
+/* ------------------------- demo world (in-page) ------------------------- */
+let W = null;
+
+async function newWorld() {
+  const registry = new DIDRegistry();
+  const parties = {};
+  async function make(did, keyName = "key-1") {
+    const kp = await makeKeyPair();
+    const kid = `${did}#${keyName}`;
+    registry.register(did, kid, kp.publicRaw);
+    parties[did] = { kid, kp };
+  }
+  await make("did:web:principal-buyer.example");
+  await make("did:web:supplier.example");
+  await make("did:web:gateway.example");
+  await make("did:web:log-operator.example");
+  await make("did:web:adjudicator.example", "adj-1");
+  const agentKp = await makeKeyPair();
+  const agentDid = agentKp.didKey;
+  registry.register(agentDid, agentDid + "#0", agentKp.publicRaw);
+
+  const lop = parties["did:web:log-operator.example"];
+  const log = new ReceiptLog("did:web:log-operator.example", lop.kid, lop.kp);
+
+  const pr = parties["did:web:principal-buyer.example"];
+  const mandate = await issueMandate({
+    principalDid: "did:web:principal-buyer.example",
+    principalKid: pr.kid, principalKeypair: pr.kp,
+    jurisdiction: "AR", agentDid,
+    operatorDid: "did:web:agent-operator.example",
+    instructionText: "Keep industrial supplies stocked; do not overspend; ask me for anything large.",
+    constraints: {
+      max_total_amount_minor: 50000000,
+      max_per_tx_amount_minor: 20000000,
+      currency: "ARS",
+      max_transactions: 10,
+      categories: ["industrial_supplies"],
+      counterparties: { mode: "any" },
+      valid_from: "2026-01-01T00:00:00.000Z",
+      valid_until: "2026-12-31T23:59:59.999Z",
+      human_approval_above_minor: 15000000,
+    },
+  });
+
+  const identity = {
+    agent_id: agentDid,
+    software: { name: "procurement-agent", version: "2.4.1",
+      build_hash: await hashText("procurement-agent@2.4.1") },
+    model: { provider: "anthropic", model_id: "claude-sonnet-4-6",
+      config_hash: await hashText("config:procurement-agent@2.4.1") },
+    operator: { id: "did:web:agent-operator.example",
+      legal_entity: { jurisdiction: "AR",
+        registration_hash: await hashText("registration:did:web:agent-operator.example") } },
+  };
+
+  return {
+    registry, parties, log, mandate, identity,
+    agentDid, agentKp,
+    originalHashes: [], tampered: new Set(), seq: 0, prev: null,
+  };
+}
+
+async function issue(amountMinor, withApproval) {
+  W.seq += 1;
+  const when = nowIso();
+  const terms = {
+    amount_minor: amountMinor, currency: "ARS", category: "industrial_supplies",
+    counterparty: { id: "did:web:supplier.example", role: "merchant" },
+    description_hash: await hashText("restock order #" + W.seq),
+    line_items_hash: await hashText("items:restock order #" + W.seq),
+    payment: { rail: "mercadopago", rail_tx_ref: "mp:pay:10000" + W.seq,
+      gateway_id: "did:web:gateway.example" },
+  };
+  const pr = W.parties["did:web:principal-buyer.example"];
+  const approval = withApproval ? await humanApproval(terms, pr.kid, pr.kp) : null;
+  const receipt = await buildReceipt({
+    mandate: W.mandate, prev: W.prev, seq: W.seq, identity: W.identity,
+    decisionContext: {
+      inputs_commitment: await hashText("stock-report-" + W.seq),
+      inputs_manifest_hash: await hashText("manifest-" + W.seq),
+      policy_version: "procurement-policy/1.3", captured_at: when,
+    },
+    terms, outcomeStatus: "settled",
+    decisionAt: when, authorizedAt: when, settledAt: when,
+    humanApprovalBlock: approval,
+  });
+  await signObject(receipt, { role: "agent", kid: W.agentDid + "#0", keypair: W.agentKp });
+  const su = W.parties["did:web:supplier.example"];
+  await signObject(receipt, { role: "counterparty", kid: su.kid, keypair: su.kp });
+  const gw = W.parties["did:web:gateway.example"];
+  await signObject(receipt, { role: "witness", kid: gw.kid, keypair: gw.kp });
+  const rh = await W.log.append(receipt);
+  W.originalHashes.push(rh);
+  W.prev = rh;
+  return { rh, seq: W.seq };
+}
+
+/* ------------------------------- render --------------------------------- */
+async function refresh() {
+  const anchored = new Set();
+  for (const a of W.log.anchors) a.receipt_hashes.forEach((h) => anchored.add(h));
+  const receipts = W.originalHashes.map((rh) => {
+    const r = W.log.byHash.get(rh);
+    return {
+      hash: rh, seq: r.seq, amount: r.terms.amount_minor,
+      prev: r.prev_receipt_hash,
+      anchored: anchored.has(rh), tampered: W.tampered.has(rh),
+      approval: r.human_approval != null,
+    };
+  });
+  const c = W.mandate.authorization.constraints;
+  const spent = receipts.filter((r) => !r.tampered).reduce((s, r) => s + r.amount, 0);
+
+  $("st-receipts").textContent = receipts.length;
+  $("st-anchored").textContent = receipts.filter((r) => r.anchored).length;
+  $("st-anchors").textContent = W.log.anchors.length;
+
+  $("mandate-id").textContent = W.mandate.mandate_id;
+  const rows = [
+    ["max_total", fmtARS(c.max_total_amount_minor)],
+    ["max_per_tx", fmtARS(c.max_per_tx_amount_minor)],
+    ["human_approval_above", fmtARS(c.human_approval_above_minor)],
+    ["categories", c.categories.join(", ")],
+    ["valid_from", c.valid_from.slice(0, 10)],
+    ["valid_until", c.valid_until.slice(0, 10)],
+    ["counterparties", c.counterparties.mode],
+    ["max_transactions", String(c.max_transactions)],
+  ];
+  $("mandate-grid").innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+
+  const pct = Math.min(100, (spent / c.max_total_amount_minor) * 100);
+  $("budget-fill").style.width = pct + "%";
+  $("budget-fill").classList.toggle("over", spent > c.max_total_amount_minor);
+  $("budget-text").textContent = fmtARS(spent) + " / " + fmtARS(c.max_total_amount_minor);
+
+  const chain = $("chain");
+  if (!receipts.length) {
+    chain.innerHTML = '<div class="chain-empty">No receipts yet — issue one to start the chain.</div>';
+    return;
+  }
+  chain.innerHTML = "";
+  receipts.forEach((r, i) => {
+    const wrap = document.createElement("div");
+    wrap.className = "link-wrap";
+    if (i > 0) {
+      const joint = document.createElement("div");
+      const broken = receipts[i - 1].tampered;
+      joint.className = "link-joint" + (broken ? " broken" : "");
+      joint.textContent = broken
+        ? "✕ prev " + shortHash(r.prev) + " — link no longer verifies"
+        : "prev " + shortHash(r.prev);
+      wrap.appendChild(joint);
+    }
+    const card = document.createElement("div");
+    card.className = "receipt" + (r.tampered ? " tampered" : "");
+    card.innerHTML = `
+      <div class="seq">#${r.seq}</div>
+      <div class="info">
+        <div class="amount">${fmtARS(r.amount)}</div>
+        <div class="hash">${r.hash}</div>
+        <div class="badges">
+          <span class="badge ${r.anchored ? "anchored" : "pending"}">${r.anchored ? "anchored" : "unanchored"}</span>
+          ${r.approval ? '<span class="badge approval">approval ✓</span>' : ""}
+          ${r.tampered ? '<span class="badge tampered">tampered</span>' : ""}
+        </div>
+      </div>`;
+    const btn = document.createElement("button");
+    btn.className = "claim-btn";
+    btn.textContent = "File claim";
+    btn.addEventListener("click", () => runClaim(r.hash, r.seq));
+    card.appendChild(btn);
+    wrap.appendChild(card);
+    chain.appendChild(wrap);
+  });
+}
+
+function renderVerdict(adj, seq) {
+  const body = $("verdict-body");
+  const cls = adj.verdict === "WITHIN_MANDATE" ? "ok"
+            : adj.verdict === "INDETERMINATE" ? "warn" : "bad";
+  body.innerHTML = `
+    <div class="checks">${Object.keys(adj.checks).map((k) => {
+      const pass = adj.checks[k].startsWith("PASS");
+      return `<div class="check ${pass ? "pass" : "fail"}"><span class="k">${k.split("_")[0]}</span><span class="v"></span></div>`;
+    }).join("")}</div>
+    <div class="stamp ${cls}">${adj.verdict.replaceAll("_", " ")}</div>
+    <div class="resolution">receipt #${seq} · resolution: ${adj.resolution_path}</div>`;
+  const vs = Object.values(adj.checks);
+  body.querySelectorAll(".check .v").forEach((el, i) => (el.textContent = vs[i]));
+
+  if (adj.violations.length) {
+    const table = document.createElement("table");
+    table.className = "violations";
+    table.innerHTML = "<thead><tr><th>constraint</th><th>expected</th><th>actual</th></tr></thead>";
+    const tb = document.createElement("tbody");
+    const fmt = (x) => typeof x === "number" ? fmtARS(x) : Array.isArray(x) ? x.join(", ") : String(x);
+    adj.violations.forEach((v) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td></td><td class="expected"></td><td class="actual"></td>`;
+      tr.children[0].textContent = v.constraint;
+      tr.children[1].textContent = fmt(v.expected);
+      tr.children[2].textContent = fmt(v.actual);
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    body.appendChild(table);
+  }
+}
+
+async function runClaim(hash, seq) {
+  try {
+    const receipt = W.log.byHash.get(hash);
+    const pr = W.parties["did:web:principal-buyer.example"];
+    const claim = await fileClaim({
+      receipt, claimantDid: "did:web:principal-buyer.example",
+      claimantKid: pr.kid, claimantKp: pr.kp,
+      assertedLossMinor: receipt.terms.amount_minor, currency: "ARS",
+      reason: "principal disputes this transaction",
+    });
+    const adjp = W.parties["did:web:adjudicator.example"];
+    const adj = await adjudicate({
+      claim, receipt, mandate: W.mandate, log: W.log, registry: W.registry,
+      adjudicatorDid: "did:web:adjudicator.example",
+      adjudicatorKid: adjp.kid, adjudicatorKp: adjp.kp,
+    });
+    renderVerdict(adj, seq);
+    logEvent(`claim on #${seq} → ${adj.verdict} (${adj.violations.length} violation(s))`);
+  } catch (e) { logEvent("claim failed: " + e.message, true); }
+}
+
+/* ------------------------------- actions -------------------------------- */
+const rnd = () => 5000000 + 500000 * Math.floor(Math.random() * 19);
+const ACTIONS = {
+  "issue-ok":         async () => { const r = await issue(rnd(), false); logEvent(`receipt #${r.seq} issued (in mandate)`); },
+  "issue-approved":   async () => { const r = await issue(18000000, true); logEvent(`receipt #${r.seq} issued with human approval`); },
+  "issue-unapproved": async () => { const r = await issue(18000000, false); logEvent(`receipt #${r.seq} issued above threshold, NO approval`); },
+  "issue-incident":   async () => { const r = await issue(78000000, false); logEvent(`receipt #${r.seq} issued — the §13 incident`); },
+  "anchor":           async () => { const a = await W.log.anchor(); logEvent(`anchored range [${a.range}] root ${shortHash(a.merkle_root)}`); },
+  "tamper":           async () => {
+    if (!W.originalHashes.length) throw new Error("no receipts to tamper with");
+    const rh = W.originalHashes.at(-1);
+    const r = W.log.byHash.get(rh);
+    const before = r.terms.amount_minor;
+    r.terms.amount_minor = 18000000;
+    W.tampered.add(rh);
+    logEvent(`TAMPERED ${shortHash(rh)}: ${fmtARS(before)} → ${fmtARS(18000000)}`);
+  },
+  "reset":            async () => {
+    W = await newWorld();
+    $("verdict-body").innerHTML = '<div class="verdict-empty">File a claim on any receipt to run the adjudicator.</div>';
+    logEvent("world reset");
+  },
+};
+
+document.querySelectorAll(".action").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    try { await ACTIONS[btn.dataset.act](); await refresh(); }
+    catch (e) { logEvent(e.message, true); }
+    finally { btn.disabled = false; }
+  });
+});
+
+/* -------------------------------- boot ----------------------------------- */
+(async () => {
+  try {
+    await crypto.subtle.generateKey({ name: "Ed25519" }, true, ["sign", "verify"]);
+  } catch {
+    $("unsupported").style.display = "block";
+    document.querySelector("main").style.display = "none";
+    return;
+  }
+  W = await newWorld();
+  await refresh();
+  logEvent("console ready — keys generated locally, nothing leaves this page");
+})();
+</script>
+</body>
+</html>
