@@ -1,0 +1,18 @@
+{
+  "air-vector-swapped.json": {
+    "disclosure": "settle-response.json",
+    "entry_hash": "71eb1a0f210dc1322356c19b4244e3f92c3e34188a51f57c8d4d9e6ab143c01b",
+    "rederivation": "fail",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "payment.payer and payment.pay_to exchanged; signature honest, roles false \u2014 the \u00a74.3 comparison against disclosed bytes is what catches it"
+  },
+  "air-vector-valid.json": {
+    "disclosure": "settle-response.json",
+    "entry_hash": "3a29103c682fe084a39c684c8b3295a684ad84557894ae9823765f15f578215d",
+    "rederivation": "pass",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "disclosed settle-response payer matches embedded payment.payer (\u00a74.3)"
+  }
+}
