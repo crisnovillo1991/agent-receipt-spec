@@ -1,0 +1,30 @@
+{
+  "air-vector-role-outside-vocabulary.json": {
+    "entry_hash": "1cfd7c9578b53d20e946d0cb1f946a65a99db826974007df592ee724c8d1d804",
+    "proposed_4_1": "fail",
+    "reason": "role-outside-vocabulary",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "signer 'auditor' resolves to a parties[] entry with the same role and key_id, but the role is outside the closed vocabulary"
+  },
+  "air-vector-unresolved-signer.json": {
+    "entry_hash": "a0d8b6c226d8524189edb9cbaecaa275343bee223685b4a8d321b27840546cf7",
+    "proposed_4_1": "fail",
+    "reason": "signer-unresolved",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "signature 2 claims signer 'payer' with a key_id that matches no parties[] entry; signature is cryptographically valid over the \u00a76 payload"
+  },
+  "air-vector-valid.json": {
+    "derived_beneficiary": {
+      "bridge": false,
+      "payer": false,
+      "provider": true
+    },
+    "entry_hash": "767f9247b13d4eed18fab9a84c1d856ba7fa4c17fa4a612ee92f3678e71dbcbe",
+    "proposed_4_1": "pass",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "every signer is in the closed role vocabulary and resolves to exactly one parties[] entry by (role, key_id); beneficiary relation derived as party id == payment.pay_to"
+  }
+}
