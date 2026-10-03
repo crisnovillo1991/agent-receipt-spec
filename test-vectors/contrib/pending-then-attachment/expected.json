@@ -1,0 +1,37 @@
+{
+  "air-vector-attachment-swapped.json": {
+    "disclosure": "settle-response.json",
+    "disclosure_without_receipt": "pass",
+    "entry_hash": "746a47631009ff59449b745f3646b23c253400e99cabda64b679d089db8befdf",
+    "pair_with_disclosure": "fail",
+    "reason": "payer re-derivation mismatch",
+    "receipt": "air-vector-receipt-swapped.json",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "disclosure carries the true payer; with --receipt the \u00a74.3 comparison runs against the swapped receipt and fails; without --receipt the rule has nothing to compare and stays silent"
+  },
+  "air-vector-attachment-valid.json": {
+    "disclosure": "settle-response.json",
+    "disclosure_without_receipt": "pass",
+    "entry_hash": "acc4e95e694bc3fc684a84dc7eca743e6db5427ac2b47aa2bd8263a0281e7953",
+    "pair_with_disclosure": "pass",
+    "receipt": "air-vector-receipt-valid.json",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "settled attachment; disclosed payer equals the paired receipt's payment.payer (\u00a74.3 via attaches_to)"
+  },
+  "air-vector-receipt-swapped.json": {
+    "entry_hash": "05a8dbeec6e1f2f39d3a1069e825e550f45fc1a76835d2705a48a2d04a599e7b",
+    "settlement_status": "pending",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "same receipt with payment.payer and payment.pay_to exchanged, nothing else changed; signature honest, roles false"
+  },
+  "air-vector-receipt-valid.json": {
+    "entry_hash": "c1df3d5488ee3ef71622ede240936759975f0226eaf70f16abb732d9b977cee9",
+    "settlement_status": "pending",
+    "spec_version": "0.3-draft",
+    "standalone_verify": "pass",
+    "why": "pending receipt; payment.payer is the true payer"
+  }
+}
