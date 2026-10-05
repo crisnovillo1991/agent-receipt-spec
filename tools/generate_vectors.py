@@ -431,6 +431,18 @@ def main() -> None:
                "otherwise produce a content address and none, both saying OK "
                "(§5 / issue #15)"}
 
+    # ---------------------------------------------------- draft 3 (issue #20)
+    v12_core = v02_receipt_core("s-draft3", 0, None, "pending", None, None)
+    v12_core["spec_version"] = "0.3-draft-3"
+    v12 = sign(v12_core)
+    write(ROOT / "valid/12-v03d3-receipt-signer-resolves.json", v12)
+    expected["valid/12-v03d3-receipt-signer-resolves.json"] = {
+        "spec_version": "0.3-draft-3", "entry_hash": entry_hash(v12),
+        "standalone_verify": "pass",
+        "why": "a 0.3-draft-3 receipt: version dispatch accepts the draft, the v0.2 "
+               "entry shape is inherited, and the bridge signature resolves to exactly "
+               "one parties[] entry by (role, key_id) (§4.1 / issue #20)"}
+
     (ROOT / "expected.json").write_text(json.dumps(expected, indent=2, sort_keys=True),
                                         encoding="utf-8")
     (ROOT / "KEY.txt").write_text(

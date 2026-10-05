@@ -92,6 +92,22 @@ def entry_hash(entry: dict) -> str:
     return hashlib.sha256(canonical(entry)).hexdigest()
 
 
+# ---------------- version dispatch --------------------------------------------
+# v0.3 drafts inherit the v0.2 entry shape (SPEC-v0.3-draft: "§1–§9 of v0.2
+# unchanged except as amended"). A draft's rule set is fixed by its number:
+#   0.3-draft-2  the published draft; no signer-role rule in its text.
+#   0.3-draft-3  in preparation; carries the §4.1 signer-role rules ruled in
+#                issue #20 (closed vocabulary, signer resolves to parties[]).
+# 0.3-draft-1 is superseded and stays unknown. "0.3" is reserved for the freeze.
+DRAFT_2 = "0.3-draft-2"
+DRAFT_3 = "0.3-draft-3"
+V03_DRAFTS = (DRAFT_2, DRAFT_3)
+V02_SHAPE = ("0.2",) + V03_DRAFTS          # versions sharing the v0.2 entry shape
+KNOWN_VERSIONS = ("0.1",) + V02_SHAPE
+SIGNER_ROLES_ENFORCED = (DRAFT_3,)         # FAIL here; a note on 0.2 / draft-2
+ROLE_VOCABULARY = ("bridge", "provider", "payer")   # shared with parties[].role
+
+
 def prev_field(entry: dict) -> str:
     return "prev_receipt_hash" if entry.get("spec_version") == "0.1" else "prev_entry_hash"
 
@@ -149,7 +165,7 @@ def verify_entry(entry: dict) -> list[str]:
     if not isinstance(entry, dict):
         return ["entry is not a JSON object"]
     ver = entry.get("spec_version")
-    if entry.get("spec") != SPEC or ver not in ("0.1", "0.2"):
+    if entry.get("spec") != SPEC or ver not in KNOWN_VERSIONS:
         return ["unknown spec/spec_version"]
 
     core = {k: v for k, v in entry.items() if k != "signatures"}
@@ -190,20 +206,56 @@ def verify_entry(entry: dict) -> list[str]:
         problems.append(f"seq 0 must have {prev_field(entry)} null")
 
     # version field exclusivity: an entry may not carry the other version's names
-    if ver == "0.2" and "prev_receipt_hash" in entry:
-        problems.append("v0.2 entry carries v0.1 field prev_receipt_hash (§4.0)")
+    if ver in V02_SHAPE and "prev_receipt_hash" in entry:
+        problems.append(f"v{ver} entry carries v0.1 field prev_receipt_hash (§4.0)")
     if ver == "0.1" and ("prev_entry_hash" in entry or "entry_type" in entry):
         problems.append("v0.1 entry carries v0.2 field names")
 
-    if ver == "0.2":
+    if ver in V02_SHAPE:
         etype = entry.get("entry_type")
         if etype not in ("receipt", "settlement-attachment"):
-            problems.append("v0.2 entry_type missing or unknown")
+            problems.append(f"v{ver} entry_type missing or unknown")
         elif etype == "receipt":
             problems += _verify_receipt_shape(entry)
+            if ver in SIGNER_ROLES_ENFORCED:
+                problems += signer_role_findings(entry.get("signatures"),
+                                                 entry.get("parties"))
         else:
             problems += _verify_attachment_shape(entry)
+
+    if ver in V03_DRAFTS and "authorizations" in entry:
+        # Draft §2.7: steps 1–5 are mandatory for validity whenever the field
+        # is present. They are not implemented here yet, and a verifier must
+        # not print OK over bindings it did not check.
+        problems.append("authorizations[] present: §2.7 structural verification is "
+                        "not implemented in this verifier — validity cannot be asserted")
     return problems
+
+
+def signer_role_findings(sigs, parties) -> list[str]:
+    """§4.1 (issue #20): each signature's `signer` is a role from the closed
+    vocabulary shared with parties[].role, and resolves to exactly one
+    parties[] entry with the same role and key_id. Malformed structure, so it
+    fails closed where enforced. The verifier never weights a role: who signed
+    and in what capacity is recorded; what that is worth is consumer policy."""
+    findings: list[str] = []
+    if not isinstance(sigs, list) or not isinstance(parties, list):
+        return findings  # shape errors are reported by the shape checks
+    for i, s in enumerate(sigs):
+        if not isinstance(s, dict):
+            continue
+        role, kid = s.get("signer"), s.get("key_id")
+        if role not in ROLE_VOCABULARY:
+            findings.append(f"signature {i}: signer {role!r} is outside the role "
+                            f"vocabulary {'|'.join(ROLE_VOCABULARY)} (§4.1)")
+            continue
+        n = sum(1 for p in parties if isinstance(p, dict)
+                and p.get("role") == role and p.get("key_id") == kid
+                and isinstance(kid, str))
+        if n != 1:
+            findings.append(f"signature {i}: signer {role!r} with key_id {kid!r} resolves "
+                            f"to {n} parties[] entries, expected exactly 1 (§4.1)")
+    return findings
 
 
 def _verify_receipt_shape(entry: dict) -> list[str]:
@@ -287,6 +339,10 @@ def verify_pair(att: dict, receipt: dict) -> list[str]:
         problems.append("pair BROKEN: attachment seq must exceed receipt seq")
     if receipt.get("entry_type") != "receipt" or not isinstance(receipt.get("payment"), dict):
         problems.append("pair BROKEN: target is not a paid receipt")
+    # §4.1: an attachment carries no parties[]; its signers resolve against the
+    # paired receipt's, the same attaches_to path the §4.3 payer rule takes.
+    if att.get("spec_version") in SIGNER_ROLES_ENFORCED:
+        problems += signer_role_findings(att.get("signatures"), receipt.get("parties"))
     return problems
 
 
@@ -416,9 +472,17 @@ def main() -> int:
         print(f"entry_hash: {entry_hash(entry)}")
     except ValueError:
         pass
+    # §4.1 on versions that predate the rule: a finding, never a FAIL. A frozen
+    # or already-published version does not change validity retroactively.
+    ver = entry.get("spec_version") if isinstance(entry, dict) else None
+    if ver in V02_SHAPE and ver not in SIGNER_ROLES_ENFORCED:
+        against = entry.get("parties") if entry.get("entry_type") == "receipt" else (
+            receipt.get("parties") if isinstance(receipt, dict) else None)
+        for f in signer_role_findings(entry.get("signatures"), against):
+            print(f"note (§4.1, enforced from {DRAFT_3}; not on {ver}): {f}")
     if not problems:
         pay = entry.get("payment") if isinstance(entry.get("payment"), dict) else None
-        if entry.get("spec_version") == "0.2" and pay and pay.get("settlement_status") == "pending":
+        if ver in V02_SHAPE and pay and pay.get("settlement_status") == "pending":
             print("note (§8.3): pending — dispute-grade for content, NOT payment finality, "
                   "until a matching settlement attachment is presented")
         print("OK: all requested checks passed")

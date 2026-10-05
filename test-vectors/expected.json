@@ -159,5 +159,11 @@
     "spec_version": "0.2",
     "standalone_verify": "pass",
     "why": "meta keys U+1F600 (astral) and U+FFFD (BMP): RFC 8785 UTF-16 code-unit ordering places the astral key FIRST \u2014 the only round-3 change with hash-stability reach beyond the BMP, now pinned (\u00a75)"
+  },
+  "valid/12-v03d3-receipt-signer-resolves.json": {
+    "entry_hash": "8db17522f14516638ac7488d8d6c8f6f03f8f435515cedc5a4706c8eea2ff5d8",
+    "spec_version": "0.3-draft-3",
+    "standalone_verify": "pass",
+    "why": "a 0.3-draft-3 receipt: version dispatch accepts the draft, the v0.2 entry shape is inherited, and the bridge signature resolves to exactly one parties[] entry by (role, key_id) (\u00a74.1 / issue #20)"
   }
 }
