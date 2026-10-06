@@ -10,9 +10,9 @@ This set pins the three-point scope for `SPEC-v0.3-draft.md` §4.1 (co-signature
 2. **Signer resolution.** Every signature resolves to exactly one `parties[]` entry with `role == signer` and `key_id == key_id`. `Party.key_id` is already defined in v0.2 §4.1 as "Key identifier if this party signs (§6)"; the pair (role, key_id) is the join the text already provides.
 3. **Beneficiary relation, derived.** Resolved party `id` compared with `payment.pay_to` (lowercase). Not a field and not a validity rule. `pay_to` is issuer-attested in the current profile (draft-2 §4.3), so the derived relation carries that status.
 
-All three receipts are v0.2 entries (`spec_version: "0.2"`, the version the reference verifier dispatches on) with `payment.settlement_status: "pending"`. Every signature covers the same §5/§6 signing payload.
+All three receipts carry `spec_version: "0.3-draft-3"` (the v0.2 entry shape, inherited by the draft; see "Re-signed" below) with `payment.settlement_status: "pending"`. Every signature covers the same §5/§6 signing payload.
 
-| File | Signatures | Expected under the proposed §4.1 |
+| File | Signatures | Expected under §4.1 (0.3-draft-3) |
 |---|---|---|
 | `air-vector-valid.json` | bridge, provider, payer, each resolving to its `parties[]` entry | PASS; derived beneficiary: bridge `false`, provider `true`, payer `false` |
 | `air-vector-unresolved-signer.json` | as valid, but signature 2 claims `signer: "payer"` under a key that no `parties[]` entry lists | FAIL, reason `signer-unresolved` |
@@ -36,7 +36,7 @@ Each file is the RFC 8785 canonical form of the entry plus a final line feed. To
 - payer: `0xa11ce00000000000000000000000000000000001`, payTo: `0xb0b0000000000000000000000000000000000002` (the synthetic pair from `contrib/payer-rederivation/`).
 - Request, response and payment-payload digests are SHA-256 values of synthetic test bytes. Amount `10000` is synthetic. No production row, address or hash is used.
 
-## Verification result
+## Verification result (original `0.2` signing, as first opened)
 
 Tested against commit `182fe4d` (`verifier/verify.py`, unchanged):
 
@@ -45,5 +45,15 @@ Tested against commit `182fe4d` (`verifier/verify.py`, unchanged):
 - `air-vector-role-outside-vocabulary.json`: exit 0.
 
 Today's verifier passes both negatives. It checks every signature against the payload and checks `key_id` against `public_key`, but it does not read `signer`, and it does not enforce the `parties[].role` values that v0.2 §4.1 already lists. That gap is the reason for the pair. A probe of the three proposed rules, written against the text above and not part of the repository, passes the valid file and rejects each negative with its named reason.
+
+## Re-signed 2026-10-06
+
+Re-signed 2026-10-06 as spec_version 0.3-draft-3 per the maintainer ruling in #20 (verifier at fb70856). Only `spec_version` changed; the keys listed above are unchanged, and every signature was regenerated over the new §6 payload. Under `0.2` the verifier at `fb70856` reports both negatives as a §4.1 note with exit 0; under `0.3-draft-3` it rejects them.
+
+- `air-vector-valid.json`: exit 0, `OK: all requested checks passed`.
+- `air-vector-unresolved-signer.json`: exit 1, `FAIL: signature 2: signer 'payer' with key_id 'ed25519:NKXaelm0otOd' resolves to 0 parties[] entries, expected exactly 1 (§4.1)`.
+- `air-vector-role-outside-vocabulary.json`: exit 1, `FAIL: signature 2: signer 'auditor' is outside the role vocabulary bridge|provider|payer (§4.1)`.
+
+The verifier on `main` at `3ffe177` predates the 0.3 version dispatch and rejects all three files with `FAIL: unknown spec/spec_version` (exit 1). That is a version-dispatch result, not a §4.1 result.
 
 Cite as: SmartFlow Observatory, github.com/smartflowproai-lang
