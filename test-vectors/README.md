@@ -53,3 +53,4 @@ round.
 | `valid/11-v02-astral-meta-keys` | pass | — | UTF-16 code-unit ordering above the BMP: astral keys sort first (§5) |
 | `invalid/21-v02-verify-leg-as-settlement` | pass | re-derivation **fail** (disclosure 21) | a verify-shaped reply (`{"isValid": true}`) can never launder into settlement (§8.4) |
 | `invalid/22-v02-lone-surrogate-signature` | **fail** | — | lone surrogates have no canonical form: reject, never silently accept (§5 / #15) |
+| `invalid/23-v02-lone-surrogate-key` | **fail** | — | the same rule in key position: object keys are strings too, and a values-only walk misses them (§5 / #15, found via #22) |
