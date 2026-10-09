@@ -38,7 +38,8 @@ def _check(obj):
     if isinstance(obj, int) and abs(obj) > INT_BOUND:
         raise ValueError("integer exceeds 2^53-1")
     if isinstance(obj, dict):
-        for v in obj.values():
+        for k, v in obj.items():
+            _check(k)
             _check(v)
     elif isinstance(obj, list):
         for v in obj:
@@ -430,6 +431,18 @@ def main() -> None:
                "UTF-8 refuses it, so no entry_hash exists — two conforming stacks would "
                "otherwise produce a content address and none, both saying OK "
                "(§5 / issue #15)"}
+
+    i23 = _copy.deepcopy(a06)
+    i23["signatures"][0]["\udc00"] = 1
+    (ROOT / "invalid/23-v02-lone-surrogate-key.json").write_text(
+        json.dumps(i23, separators=(",", ":")), encoding="utf-8", errors="surrogatepass")
+    expected["invalid/23-v02-lone-surrogate-key.json"] = {
+        "spec_version": "0.2", "standalone_verify": "fail",
+        "why": "a lone surrogate in an object KEY outside the signed payload: the same "
+               "missing-content-address case as invalid/22, in key position — a check "
+               "that walks only values lets it through with every signature valid "
+               "(§5 / issue #15; surfaced by case SURR-2 of the SAR primitive corpus, "
+               "issue #22)"}
 
     # ---------------------------------------------------- draft 3 (issue #20)
     v12_core = v02_receipt_core("s-draft3", 0, None, "pending", None, None)

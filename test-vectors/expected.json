@@ -74,6 +74,11 @@
     "standalone_verify": "fail",
     "why": "a lone surrogate outside the signed payload: json.loads accepts it, UTF-8 refuses it, so no entry_hash exists \u2014 two conforming stacks would otherwise produce a content address and none, both saying OK (\u00a75 / issue #15)"
   },
+  "invalid/23-v02-lone-surrogate-key.json": {
+    "spec_version": "0.2",
+    "standalone_verify": "fail",
+    "why": "a lone surrogate in an object KEY outside the signed payload: the same missing-content-address case as invalid/22, in key position \u2014 a check that walks only values lets it through with every signature valid (\u00a75 / issue #15; surfaced by case SURR-2 of the SAR primitive corpus, issue #22)"
+  },
   "valid/01-free-call-seq0.json": {
     "entry_hash": "41a1f974fd857b5d65321178a39d3f0248fe4a95c340fb3e91df731a0fe906c6",
     "spec_version": "0.1",

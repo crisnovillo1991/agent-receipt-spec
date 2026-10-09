@@ -1,0 +1,290 @@
+{
+  "schema": "air-side-run-of-sar-primitive-vectors/v1",
+  "claim_ceiling": "PRIMITIVE_COMPATIBILITY_ONLY",
+  "sar_pin": "nutstrut/default-settlement-verifier@8efd6528be234e66ff976c0a01dddabbf05671e7",
+  "vectors_file_sha256": "9692dfc5bd59cbbf6b8cad8f6a309786b3a07194a718c2952dd7506344db155f",
+  "fixture_file_sha256": "538b6d7bfd3ff215c3156c3085c47b636ac2c4a473617799f4f96cab682f3236",
+  "air_verifier_sha256": "f11798e5e6ed889d6d852973b272de611fcddae5c060222bc732e8016ebd7bf0",
+  "air_stack": {
+    "parser": "verify.loads_strict (json.loads + duplicate-key hook)",
+    "canonicalizer": "verify.canonical (own RFC 8785 profile: no floats, |int| <= 2^53-1)",
+    "ed25519": "cryptography Ed25519PublicKey + verify.is_small_order"
+  },
+  "capsule_code_executed": false,
+  "cases_run": 27,
+  "results": [
+    {
+      "case_id": "REUSE-1",
+      "category": "A_INTEGER_ONLY_JCS|F_FLOAT (reused SAR v0.1 core)",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "floats are forbidden by the spec (\u00a75)",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "air_rejection_kind": "PROFILE_NO_FLOATS",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "REUSE-2-ED25519",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "ESTABLISHED",
+      "sar_expected_verify": "ESTABLISHED",
+      "verify_agrees": true,
+      "air_derived_preimage_matches": null,
+      "air_derived_preimage_note": "AIR cannot canonicalize REUSE-1: floats are forbidden by the spec (\u00a75)"
+    },
+    {
+      "case_id": "INT-1",
+      "category": "A_INTEGER_ONLY_JCS",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "ESTABLISHED",
+      "air_canonical_bytes_hex": "7b2261223a302c2262223a2d372c226e223a6e756c6c2c2273223a22715c225c5c415c6e222c2274223a747275652c227a223a5b332c322c315d7d",
+      "air_sha256": "ab6962f89edb4cb90c8cebf9010fc65b1d3b06a6bf38afbfc241a4cedca0b8e8",
+      "relation_to_sar_jcs": "IDENTICAL_BYTES",
+      "sha256_matches_sar": true,
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": true
+    },
+    {
+      "case_id": "INT-2",
+      "category": "A_INTEGER_ONLY_JCS",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "ESTABLISHED",
+      "air_canonical_bytes_hex": "7b22636f6e666964656e6365223a393130302c22726561736f6e5f636f6465223a224f4b222c227461736b5f69645f68617368223a227368613235363a3030222c227473223a22323032362d31302d30365430303a30303a30305a222c2276657264696374223a2250415353222c2276657269666965725f6b6964223a22746573742d6b65792d31227d",
+      "air_sha256": "39107d9407fed9a8e225929cfb1ce611b0fbced732a5964eb8fc7745f85c1b57",
+      "relation_to_sar_jcs": "IDENTICAL_BYTES",
+      "sha256_matches_sar": true,
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": true
+    },
+    {
+      "case_id": "UTF16-1",
+      "category": "B_UTF16_ASTRAL_KEY_ORDERING",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "ESTABLISHED",
+      "air_canonical_bytes_hex": "7b2261223a332c22f09f9880223a312c22ee8080223a327d",
+      "air_sha256": "a901d5c9340048b768183fd6fb82e7d0f7792049a0aafa9d2c7ccd845d984ad3",
+      "relation_to_sar_jcs": "IDENTICAL_BYTES",
+      "sha256_matches_sar": true,
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": true
+    },
+    {
+      "case_id": "DUP-1",
+      "category": "C_DUPLICATE_KEYS",
+      "air_parse": "REJECTED",
+      "air_parse_error": "DuplicateKeyError: duplicate key 'a'",
+      "air_canonicalization": "NOT_APPLICABLE",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "SURR-1",
+      "category": "D_LONE_SURROGATE",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "string is not UTF-8 encodable (lone surrogate) \u2014 no canonical form exists (\u00a75)",
+      "relation_to_sar_jcs": "BOTH_REJECTED",
+      "air_rejection_kind": "INPUT_DOMAIN",
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "SURR-2",
+      "category": "D_LONE_SURROGATE",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "string is not UTF-8 encodable (lone surrogate) \u2014 no canonical form exists (\u00a75)",
+      "relation_to_sar_jcs": "BOTH_REJECTED",
+      "air_rejection_kind": "INPUT_DOMAIN",
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "SURR-3",
+      "category": "D_LONE_SURROGATE",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "ESTABLISHED",
+      "air_canonical_bytes_hex": "7b226b223a22f09f9880227d",
+      "air_sha256": "f073f1f05c0a1e01bf604e8ec5f389a64fdeb334e00f9456008269e852b1ff4a",
+      "relation_to_sar_jcs": "IDENTICAL_BYTES",
+      "sha256_matches_sar": true,
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": true
+    },
+    {
+      "case_id": "NUM-1",
+      "category": "E_2POW53_BOUNDARY",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "ESTABLISHED",
+      "air_canonical_bytes_hex": "7b226e223a393030373139393235343734303939317d",
+      "air_sha256": "e1da48c6a6089f06ecb4e0a2259e658e3786b2420f52baccdf929ec6460d7b41",
+      "relation_to_sar_jcs": "IDENTICAL_BYTES",
+      "sha256_matches_sar": true,
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": true
+    },
+    {
+      "case_id": "NUM-2",
+      "category": "E_2POW53_BOUNDARY",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "integer exceeds 2^53-1 bound (\u00a75)",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "air_rejection_kind": "INPUT_DOMAIN",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "NUM-3",
+      "category": "E_2POW53_BOUNDARY",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "integer exceeds 2^53-1 bound (\u00a75)",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "air_rejection_kind": "INPUT_DOMAIN",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "NUM-4",
+      "category": "E_2POW53_BOUNDARY",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "integer exceeds 2^53-1 bound (\u00a75)",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "air_rejection_kind": "INPUT_DOMAIN",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "NUM-5",
+      "category": "E_2POW53_BOUNDARY",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "integer exceeds 2^53-1 bound (\u00a75)",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "air_rejection_kind": "INPUT_DOMAIN",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "FLOAT-1",
+      "category": "F_FLOAT",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "floats are forbidden by the spec (\u00a75)",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "air_rejection_kind": "PROFILE_NO_FLOATS",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "FLOAT-2",
+      "category": "F_FLOAT",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "floats are forbidden by the spec (\u00a75)",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "air_rejection_kind": "PROFILE_NO_FLOATS",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "FLOAT-3",
+      "category": "F_FLOAT",
+      "air_parse": "ESTABLISHED",
+      "air_canonicalization": "REJECTED",
+      "air_canonicalization_error": "floats are forbidden by the spec (\u00a75)",
+      "relation_to_sar_jcs": "DIFFERENT_OUTCOME",
+      "air_rejection_kind": "PROFILE_NO_FLOATS",
+      "sha256_over_pinned_sar_bytes_matches": true,
+      "air_profile_admissible_as_entry_content": false
+    },
+    {
+      "case_id": "ED-2",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "ESTABLISHED",
+      "sar_expected_verify": "ESTABLISHED",
+      "verify_agrees": true,
+      "air_derived_preimage_matches": true,
+      "air_test_key_rederived": true,
+      "air_resign_identical": true
+    },
+    {
+      "case_id": "ED-2-MUT-PREIMAGE",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "REJECTED",
+      "sar_expected_verify": "REJECTED",
+      "verify_agrees": true
+    },
+    {
+      "case_id": "ED-2-MUT-DIGEST",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "REJECTED",
+      "sar_expected_verify": "REJECTED",
+      "verify_agrees": true
+    },
+    {
+      "case_id": "ED-2-MUT-SIG",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "REJECTED",
+      "sar_expected_verify": "REJECTED",
+      "verify_agrees": true
+    },
+    {
+      "case_id": "ED-2-MUT-WRONG-KEY",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "REJECTED",
+      "sar_expected_verify": "REJECTED",
+      "verify_agrees": true
+    },
+    {
+      "case_id": "ED-2-MUT-CONVENTION",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "REJECTED",
+      "sar_expected_verify": "REJECTED",
+      "verify_agrees": true
+    },
+    {
+      "case_id": "ED-2-ALT-RAW",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "ESTABLISHED",
+      "sar_expected_verify": "ESTABLISHED",
+      "verify_agrees": true,
+      "air_derived_preimage_matches": true
+    },
+    {
+      "case_id": "REUSE-2-MUT-SIG",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "REJECTED",
+      "sar_expected_verify": "REJECTED",
+      "verify_agrees": true
+    },
+    {
+      "case_id": "REUSE-2-MUT-PREIMAGE",
+      "category": "H_ED25519",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "REJECTED",
+      "sar_expected_verify": "REJECTED",
+      "verify_agrees": true
+    },
+    {
+      "case_id": "REUSE-2-MUT-FIELD",
+      "category": "H_ED25519",
+      "air_note": "byte-level substitution on the pinned SAR canonical bytes; not an AIR canonicalization, not the SAR reader",
+      "air_small_order_key": false,
+      "air_ed25519_verify": "REJECTED",
+      "sar_expected_verify": "REJECTED",
+      "verify_agrees": true
+    }
+  ]
+}
